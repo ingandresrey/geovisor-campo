@@ -377,16 +377,18 @@ satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Wor
 
 map = L.map('map', {
   center: [6.2442, -75.5812],
-  zoom: 13,
+  zoom: 15,
   zoomControl: true,
-  layers: [streetLayer]
+  layers: [satLayer]
 });
+isSat = true;
 
 function toggleLayer() {
   isSat = !isSat;
   if (isSat) { map.removeLayer(streetLayer); map.addLayer(satLayer); document.getElementById('layer-toggle').textContent = '🗺 Mapa'; }
   else { map.removeLayer(satLayer); map.addLayer(streetLayer); document.getElementById('layer-toggle').textContent = '🛰 Sat'; }
 }
+document.getElementById('layer-toggle').textContent = '🗺 Mapa';
 
 async function loadPoints() {
   try {
