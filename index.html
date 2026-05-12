@@ -16,6 +16,7 @@
     --border: rgba(255,255,255,0.08);
     --success: #22c55e;
     --danger: #ef4444;
+    --offline: #7c3aed;
     --radius: 12px;
     --mono: 'Courier New', monospace;
   }
@@ -23,41 +24,42 @@
   html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, 'Segoe UI', sans-serif; overflow-x: hidden; }
 
   #header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 12px 16px; display: flex; align-items: center; gap: 10px;
+    position: sticky; top: 0; z-index: 1000;
   }
   #header h1 { font-size: 16px; font-weight: 700; color: var(--accent); letter-spacing: 0.04em; }
-  #db-status {
-    margin-left: auto;
-    font-size: 11px;
-    font-family: var(--mono);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-  #db-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+  #db-status { margin-left: auto; font-size: 11px; font-family: var(--mono); display: flex; align-items: center; gap: 5px; }
+  #db-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
   #db-dot.on { background: var(--success); }
+  #db-dot.off { background: var(--offline); animation: pulse 1.5s infinite; }
   #db-dot.err { background: var(--danger); }
 
-  #map { width: 100%; height: 55vh; min-height: 280px; z-index: 1; }
+  #offline-banner {
+    display: none; background: var(--offline); color: #fff;
+    font-size: 13px; font-weight: 600; text-align: center; padding: 9px 16px;
+  }
+  #offline-banner.show { display: block; }
+  .pending-pill {
+    display: inline-block; background: var(--accent); color: #0f1117;
+    font-size: 11px; font-weight: 700; padding: 1px 8px;
+    border-radius: 20px; margin-left: 6px; vertical-align: middle;
+  }
 
+  #map { width: 100%; height: 55vh; min-height: 280px; z-index: 1; }
   .leaflet-control-zoom a { background: var(--surface) !important; color: var(--text) !important; border-color: var(--border) !important; }
+  .map-container { position: relative; }
+  #layer-toggle {
+    position: absolute; top: 10px; right: 10px; z-index: 800;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 10px; font-size: 12px; color: var(--text); cursor: pointer; font-weight: 600;
+  }
 
   #panel { background: var(--bg); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
 
   .gps-status {
-    display: flex; align-items: center; gap: 8px;
-    padding: 10px 14px;
-    background: var(--surface);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+    background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border);
     font-size: 12px; font-family: var(--mono); color: var(--muted); min-height: 44px;
   }
   .gps-status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
@@ -66,10 +68,7 @@
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
   .coords-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .coord-box {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 8px 12px;
-  }
+  .coord-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; }
   .coord-box label { font-size: 10px; color: var(--muted); display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--mono); }
   .coord-box span { color: var(--accent); font-weight: 600; font-family: var(--mono); font-size: 13px; }
 
@@ -84,49 +83,45 @@
 
   .btn {
     width: 100%; padding: 14px; border: none; border-radius: var(--radius);
-    font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: 0.03em;
-    transition: all 0.15s; display: flex; align-items: center; justify-content: center;
-    gap: 8px; min-height: 50px;
+    font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px;
   }
   .btn:active { transform: scale(0.97); }
   .btn-gps { background: var(--accent); color: #0f1117; }
   .btn-gps:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
   .btn-save { background: var(--success); color: #fff; }
   .btn-save:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-  .btn-outline {
-    background: transparent; border: 1px solid var(--border); color: var(--muted);
-    font-size: 13px; padding: 10px;
-  }
+  .btn-save.offline-mode { background: var(--offline); }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 13px; padding: 10px; }
   .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
   .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-  .section-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 6px 0; border-bottom: 1px solid var(--border);
-  }
+  .section-header { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); }
   .section-header h2 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
   .badge { background: var(--accent); color: #0f1117; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
 
   #points-list { display: flex; flex-direction: column; gap: 8px; }
 
   .point-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 12px 14px;
-    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px;
     cursor: pointer; transition: border-color 0.2s, background 0.2s;
   }
   .point-card:hover, .point-card.active { border-color: var(--accent); background: var(--surface2); }
+  .point-card.pending { border-color: var(--offline); }
 
   .point-icon {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: var(--accent); display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 50%; background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; font-size: 12px; color: #0f1117; font-weight: 700;
   }
+  .point-icon.pend { background: var(--offline); color: #fff; font-size: 15px; }
   .point-info { flex: 1; min-width: 0; }
   .point-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .point-coords { font-size: 11px; font-family: var(--mono); color: var(--muted); margin-top: 2px; }
   .point-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .point-note { font-size: 12px; color: var(--muted); margin-top: 4px; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .point-pending-tag { font-size: 10px; color: #a78bfa; font-weight: 700; margin-top: 3px; }
 
   .point-del { background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px; font-size: 20px; line-height: 1; flex-shrink: 0; transition: color 0.15s; }
   .point-del:hover { color: var(--danger); }
@@ -144,19 +139,9 @@
   .toast.show { transform: translateX(-50%) translateY(0); }
   .toast.success { border-color: var(--success); color: var(--success); }
   .toast.error { border-color: var(--danger); color: var(--danger); }
+  .toast.offline { border-color: var(--offline); color: #c4b5fd; }
 
-  .map-container { position: relative; }
-  #layer-toggle {
-    position: absolute; top: 10px; right: 10px; z-index: 800;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 6px 10px; font-size: 12px; color: var(--text);
-    cursor: pointer; font-weight: 600;
-  }
-
-  .leaflet-popup-content-wrapper {
-    background: var(--surface) !important; color: var(--text) !important;
-    border: 1px solid var(--border) !important; border-radius: var(--radius) !important; box-shadow: none !important;
-  }
+  .leaflet-popup-content-wrapper { background: var(--surface) !important; color: var(--text) !important; border: 1px solid var(--border) !important; border-radius: var(--radius) !important; box-shadow: none !important; }
   .leaflet-popup-tip { background: var(--surface) !important; }
   .leaflet-popup-close-button { color: var(--muted) !important; }
 
@@ -178,13 +163,17 @@
   </div>
 </div>
 
+<div id="offline-banner">
+  📵 Sin internet — puntos guardados en el celular
+  <span class="pending-pill" id="pending-count" style="display:none">0</span>
+</div>
+
 <div class="map-container">
   <div id="map"></div>
   <button id="layer-toggle" onclick="toggleLayer()">🗺 Mapa</button>
 </div>
 
 <div id="panel">
-
   <div class="gps-status" id="gps-status">
     <div class="dot"></div>
     <span id="gps-text">Sin señal GPS — presiona Capturar</span>
@@ -214,7 +203,7 @@
       <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
       <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
     </svg>
-    Guardar punto en la nube
+    <span id="btn-save-txt">Guardar punto</span>
   </button>
 
   <div class="btn-row">
@@ -224,7 +213,7 @@
 
   <div style="margin-top:4px">
     <div class="section-header">
-      <h2>Puntos en la nube</h2>
+      <h2>Puntos capturados</h2>
       <span class="badge" id="badge-count">0</span>
     </div>
     <div style="height:12px"></div>
@@ -238,7 +227,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
-// ── Firebase config ──────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyC1UR6zN4sZJSxBv87Xv6V3cas_Tnf6rDs",
   authDomain: "geovisor-campo.firebaseapp.com",
@@ -252,19 +240,66 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const puntosRef = db.ref('puntos');
 
-// ── Estado ────────────────────────────────────────────────────
 let currentPos = null;
-let points = [];       // array local sincronizado con Firebase
-let markerMap = {};    // fbKey -> leaflet marker
+let cloudPoints = [];
+let pendingQueue = [];
+let markerMap = {};
 let isSat = true;
+let isOnline = navigator.onLine;
 
-// ── Mapa ──────────────────────────────────────────────────────
-const streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; OpenStreetMap, CartoDB', maxZoom: 20
-});
-const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-  attribution: 'ESRI World Imagery', maxZoom: 20
-});
+// Cola offline en localStorage
+function loadQueue() { try { pendingQueue = JSON.parse(localStorage.getItem('geo_pending') || '[]'); } catch(e) { pendingQueue = []; } }
+function saveQueue() { localStorage.setItem('geo_pending', JSON.stringify(pendingQueue)); }
+
+// Detectar cambios de conexión
+window.addEventListener('online',  () => { isOnline = true;  updateConnectionUI(); syncQueue(); });
+window.addEventListener('offline', () => { isOnline = false; updateConnectionUI(); });
+
+function updateConnectionUI() {
+  const banner = document.getElementById('offline-banner');
+  const dot = document.getElementById('db-dot');
+  const txt = document.getElementById('db-txt');
+  const saveBtn = document.getElementById('btn-save');
+  const saveTxt = document.getElementById('btn-save-txt');
+  const pill = document.getElementById('pending-count');
+  const n = pendingQueue.length;
+
+  if (isOnline) {
+    dot.className = 'on'; txt.textContent = 'nube ✓';
+    saveBtn.classList.remove('offline-mode');
+    saveTxt.textContent = 'Guardar punto';
+    if (n === 0) banner.classList.remove('show');
+  } else {
+    dot.className = 'off'; txt.textContent = 'sin internet';
+    saveBtn.classList.add('offline-mode');
+    saveTxt.textContent = 'Guardar local (sin internet)';
+    banner.classList.add('show');
+  }
+
+  if (n > 0) {
+    pill.style.display = 'inline-block';
+    pill.textContent = n + ' pendiente' + (n > 1 ? 's' : '');
+    banner.classList.add('show');
+  } else {
+    pill.style.display = 'none';
+  }
+}
+
+async function syncQueue() {
+  if (!pendingQueue.length) return;
+  showToast('Subiendo ' + pendingQueue.length + ' punto(s) guardado(s)...', 'offline');
+  const toSync = [...pendingQueue];
+  let ok = 0;
+  for (const p of toSync) {
+    try { await puntosRef.push(p); pendingQueue = pendingQueue.filter(x => x.id !== p.id); saveQueue(); ok++; } catch(e) {}
+  }
+  updateConnectionUI();
+  if (ok > 0) showToast('✓ ' + ok + ' punto(s) sincronizado(s) con la nube', 'success');
+}
+
+// Mapa
+const streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap, CartoDB', maxZoom: 20 });
+const satLayer    = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'ESRI World Imagery', maxZoom: 20 });
 const map = L.map('map', { center: [6.2442, -75.5812], zoom: 15, zoomControl: true, layers: [satLayer] });
 
 function toggleLayer() {
@@ -273,219 +308,229 @@ function toggleLayer() {
   else { map.removeLayer(satLayer); map.addLayer(streetLayer); document.getElementById('layer-toggle').textContent = '🛰 Sat'; }
 }
 
-// ── Firebase: escucha en tiempo real ─────────────────────────
-puntosRef.on('value', snapshot => {
-  // Limpiar marcadores existentes
+// Firebase tiempo real
+puntosRef.on('value', snap => {
   Object.values(markerMap).forEach(m => m.remove());
   markerMap = {};
-  points = [];
-
-  const data = snapshot.val();
+  cloudPoints = [];
+  const data = snap.val();
   if (data) {
-    Object.entries(data).forEach(([key, p]) => {
-      p._key = key;
-      points.push(p);
-    });
-    // Ordenar por timestamp
-    points.sort((a, b) => a.id - b.id);
-    points.forEach((p, i) => addMarker(p, i));
+    Object.entries(data).forEach(([k, p]) => { p._key = k; cloudPoints.push(p); });
+    cloudPoints.sort((a, b) => a.id - b.id);
   }
-  renderList();
-  setDbStatus(true);
-}, err => {
-  setDbStatus(false);
-  showToast('Error de conexión con Firebase', 'error');
-});
+  renderAll();
+  if (isOnline) { document.getElementById('db-dot').className = 'on'; document.getElementById('db-txt').textContent = 'nube ✓'; }
+}, () => { document.getElementById('db-dot').className = 'err'; document.getElementById('db-txt').textContent = 'error DB'; });
 
-function setDbStatus(ok) {
-  const dot = document.getElementById('db-dot');
-  const txt = document.getElementById('db-txt');
-  dot.className = ok ? 'on' : 'err';
-  txt.textContent = ok ? 'nube ✓' : 'sin conexión';
-}
-
-// ── Marcadores ────────────────────────────────────────────────
-function makeIcon(num) {
+function makeIcon(label, pending) {
+  const bg = pending ? '#7c3aed' : '#f59e0b';
+  const fg = pending ? '#fff' : '#0f1117';
   return L.divIcon({
     className: '',
-    html: `<div style="background:#f59e0b;width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #0f1117;box-shadow:0 2px 8px rgba(0,0,0,0.5)"><div style="transform:rotate(45deg);width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#0f1117;font-size:11px;font-weight:700">${num}</div></div>`,
-    iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -32]
+    html: `<div style="background:${bg};width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #0f1117;box-shadow:0 2px 8px rgba(0,0,0,0.5)"><div style="transform:rotate(45deg);width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:${fg};font-size:11px;font-weight:700">${label}</div></div>`,
+    iconSize: [30,30], iconAnchor: [15,30], popupAnchor: [0,-32]
   });
 }
 
-function addMarker(p, idx) {
-  const m = L.marker([p.lat, p.lng], { icon: makeIcon(idx + 1) })
-    .addTo(map)
-    .bindPopup(`
-      <div style="font-family:-apple-system,sans-serif;min-width:170px">
-        <b style="font-size:14px;color:#f59e0b">${escHtml(p.name)}</b><br>
-        <span style="font-size:11px;font-family:monospace;color:#8b90a0">${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}</span><br>
-        ${p.alt ? `<span style="font-size:11px;color:#8b90a0">Alt: ${p.alt.toFixed(1)} m</span><br>` : ''}
-        <span style="font-size:11px;color:#8b90a0">Precisión: ±${p.acc.toFixed(0)} m</span>
-        ${p.notes ? `<br><em style="font-size:12px;color:#bbb">${escHtml(p.notes)}</em>` : ''}
-        <br><span style="font-size:10px;color:#666">${p.time}</span>
-        ${p.operador ? `<br><span style="font-size:11px;color:#aaa">👤 ${escHtml(p.operador)}</span>` : ''}
-      </div>`);
-  markerMap[p._key] = m;
+function popupHtml(p, pending) {
+  return `<div style="font-family:-apple-system,sans-serif;min-width:170px">
+    <b style="font-size:14px;color:${pending?'#a78bfa':'#f59e0b'}">${escHtml(p.name)}</b>${pending?' <span style="font-size:10px;color:#a78bfa">(pendiente)</span>':''}<br>
+    <span style="font-size:11px;font-family:monospace;color:#8b90a0">${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}</span><br>
+    ${p.alt?`<span style="font-size:11px;color:#8b90a0">Alt: ${p.alt.toFixed(1)} m</span><br>`:''}
+    <span style="font-size:11px;color:#8b90a0">Precisión: ±${p.acc.toFixed(0)} m</span>
+    ${p.notes?`<br><em style="font-size:12px;color:#bbb">${escHtml(p.notes)}</em>`:''}
+    <br><span style="font-size:10px;color:#666">${p.time}</span>
+  </div>`;
 }
 
-// ── GPS ───────────────────────────────────────────────────────
 function captureGPS() {
   const btn = document.getElementById('btn-gps');
   const txt = document.getElementById('btn-gps-txt');
-  const status = document.getElementById('gps-status');
   if (!navigator.geolocation) { showToast('Tu dispositivo no soporta GPS', 'error'); return; }
   btn.disabled = true;
   txt.innerHTML = '<span class="spin">⟳</span> Obteniendo señal...';
-  status.className = 'gps-status';
+  document.getElementById('gps-status').className = 'gps-status';
   document.getElementById('gps-text').textContent = 'Buscando señal GPS...';
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      currentPos = pos.coords;
-      document.getElementById('lat-val').textContent = pos.coords.latitude.toFixed(6);
-      document.getElementById('lng-val').textContent = pos.coords.longitude.toFixed(6);
-      document.getElementById('acc-val').textContent = pos.coords.accuracy ? pos.coords.accuracy.toFixed(0) : '—';
-      document.getElementById('alt-val').textContent = pos.coords.altitude ? pos.coords.altitude.toFixed(1) : 'N/D';
-      status.className = 'gps-status active';
-      document.getElementById('gps-text').textContent = `Señal OK · ±${pos.coords.accuracy.toFixed(0)} m`;
-      map.flyTo([pos.coords.latitude, pos.coords.longitude], Math.max(map.getZoom(), 17), { animate: true, duration: 1.2 });
-      if (window._posMarker) window._posMarker.remove();
-      window._posMarker = L.circleMarker([pos.coords.latitude, pos.coords.longitude], {
-        radius: 9, color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.5, weight: 2
-      }).addTo(map);
-      btn.disabled = false;
-      txt.textContent = 'Actualizar posición GPS';
-      document.getElementById('btn-save').disabled = false;
-      showToast(`✓ Posición capturada — ±${pos.coords.accuracy.toFixed(0)} m`, 'success');
-    },
-    err => {
-      btn.disabled = false;
-      txt.textContent = 'Capturar mi posición GPS';
-      status.className = 'gps-status error';
-      const msgs = { 1: 'Permiso GPS denegado. Habilítalo en el navegador.', 2: 'Sin señal. Sal al exterior e intenta de nuevo.', 3: 'Tiempo agotado. Intenta de nuevo.' };
-      document.getElementById('gps-text').textContent = msgs[err.code] || 'Error GPS';
-      showToast(msgs[err.code] || 'Error GPS', 'error');
-    },
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-  );
+  navigator.geolocation.getCurrentPosition(pos => {
+    currentPos = pos.coords;
+    document.getElementById('lat-val').textContent = pos.coords.latitude.toFixed(6);
+    document.getElementById('lng-val').textContent = pos.coords.longitude.toFixed(6);
+    document.getElementById('acc-val').textContent = pos.coords.accuracy ? pos.coords.accuracy.toFixed(0) : '—';
+    document.getElementById('alt-val').textContent = pos.coords.altitude ? pos.coords.altitude.toFixed(1) : 'N/D';
+    document.getElementById('gps-status').className = 'gps-status active';
+    document.getElementById('gps-text').textContent = 'Señal OK · ±' + pos.coords.accuracy.toFixed(0) + ' m';
+    map.flyTo([pos.coords.latitude, pos.coords.longitude], Math.max(map.getZoom(), 17), { animate:true, duration:1.2 });
+    if (window._posMarker) window._posMarker.remove();
+    window._posMarker = L.circleMarker([pos.coords.latitude, pos.coords.longitude], { radius:9, color:'#3b82f6', fillColor:'#3b82f6', fillOpacity:0.5, weight:2 }).addTo(map);
+    btn.disabled = false;
+    txt.textContent = 'Actualizar posición GPS';
+    document.getElementById('btn-save').disabled = false;
+    showToast('✓ Posición capturada — ±' + pos.coords.accuracy.toFixed(0) + ' m', 'success');
+  }, err => {
+    btn.disabled = false; txt.textContent = 'Capturar mi posición GPS';
+    document.getElementById('gps-status').className = 'gps-status error';
+    const m = {1:'Permiso GPS denegado.',2:'Sin señal. Sal al exterior.',3:'Tiempo agotado.'};
+    document.getElementById('gps-text').textContent = m[err.code]||'Error GPS';
+    showToast(m[err.code]||'Error GPS','error');
+  }, { enableHighAccuracy:true, timeout:15000, maximumAge:0 });
 }
 
-// ── Guardar punto en Firebase ─────────────────────────────────
 function savePoint() {
   if (!currentPos) { showToast('Primero captura tu posición GPS', 'error'); return; }
   const name = document.getElementById('point-name').value.trim();
   if (!name) { document.getElementById('point-name').focus(); showToast('Escribe un nombre para el punto', 'error'); return; }
-  const now = new Date();
   const p = {
-    id: Date.now(),
-    name,
+    id: Date.now(), name,
     notes: document.getElementById('point-notes').value.trim(),
-    lat: currentPos.latitude,
-    lng: currentPos.longitude,
-    acc: currentPos.accuracy,
-    alt: currentPos.altitude || null,
-    time: now.toLocaleString('es-CO', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }),
-    operador: navigator.userAgent.includes('Mobile') ? 'Campo' : 'Oficina'
+    lat: currentPos.latitude, lng: currentPos.longitude,
+    acc: currentPos.accuracy, alt: currentPos.altitude || null,
+    time: new Date().toLocaleString('es-CO', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})
   };
-
-  puntosRef.push(p)
-    .then(() => {
-      document.getElementById('point-name').value = '';
-      document.getElementById('point-notes').value = '';
-      document.getElementById('btn-save').disabled = true;
-      currentPos = null;
-      document.getElementById('gps-status').className = 'gps-status';
-      document.getElementById('gps-text').textContent = 'Punto guardado en la nube ✓';
-      document.getElementById('lat-val').textContent = '—';
-      document.getElementById('lng-val').textContent = '—';
-      document.getElementById('acc-val').textContent = '—';
-      document.getElementById('alt-val').textContent = '—';
-      showToast(`✓ "${p.name}" guardado en la nube`, 'success');
-    })
-    .catch(() => showToast('Error al guardar. Verifica tu conexión.', 'error'));
+  if (isOnline) {
+    puntosRef.push(p)
+      .then(() => { resetForm(); showToast('✓ "' + p.name + '" guardado en la nube', 'success'); })
+      .catch(() => { saveLocally(p); });
+  } else {
+    saveLocally(p);
+  }
 }
 
-// ── Eliminar punto de Firebase ────────────────────────────────
+function saveLocally(p) {
+  pendingQueue.push(p);
+  saveQueue();
+  updateConnectionUI();
+  renderAll();
+  resetForm();
+  showToast('📵 "' + p.name + '" guardado en el celular', 'offline');
+}
+
+function resetForm() {
+  document.getElementById('point-name').value = '';
+  document.getElementById('point-notes').value = '';
+  document.getElementById('btn-save').disabled = true;
+  currentPos = null;
+  document.getElementById('gps-status').className = 'gps-status';
+  document.getElementById('gps-text').textContent = 'Listo para el siguiente punto';
+  ['lat-val','lng-val','acc-val','alt-val'].forEach(id => document.getElementById(id).textContent = '—');
+}
+
 function deletePoint(key, name) {
-  if (!confirm(`¿Eliminar "${name}"?\nEsto lo borrará para todos.`)) return;
-  db.ref('puntos/' + key).remove()
-    .then(() => showToast('Punto eliminado'))
-    .catch(() => showToast('Error al eliminar', 'error'));
+  if (!confirm('¿Eliminar "' + name + '"?')) return;
+  if (key.startsWith('pending_')) {
+    const id = parseInt(key.replace('pending_',''));
+    pendingQueue = pendingQueue.filter(x => x.id !== id);
+    saveQueue();
+    if (markerMap[key]) { markerMap[key].remove(); delete markerMap[key]; }
+    updateConnectionUI(); renderAll(); showToast('Punto local eliminado');
+  } else {
+    db.ref('puntos/' + key).remove().then(() => showToast('Punto eliminado')).catch(() => showToast('Error al eliminar','error'));
+  }
 }
 
-// ── Foco en mapa ──────────────────────────────────────────────
-function focusPoint(key) {
-  const p = points.find(x => x._key === key);
-  if (!p) return;
-  map.flyTo([p.lat, p.lng], 18, { animate: true, duration: 0.8 });
+function focusPoint(key, lat, lng) {
+  map.flyTo([lat, lng], 18, { animate:true, duration:0.8 });
   if (markerMap[key]) markerMap[key].openPopup();
   document.querySelectorAll('.point-card').forEach(el => el.classList.toggle('active', el.dataset.key === key));
 }
 
-// ── Render lista ──────────────────────────────────────────────
+function renderAll() {
+  // Quitar todos los marcadores
+  Object.values(markerMap).forEach(m => m.remove());
+  markerMap = {};
+  // Marcadores nube
+  cloudPoints.forEach((p, i) => {
+    const m = L.marker([p.lat, p.lng], { icon: makeIcon(i+1, false) }).addTo(map).bindPopup(popupHtml(p, false));
+    markerMap[p._key] = m;
+  });
+  // Marcadores pendientes
+  pendingQueue.forEach((p, i) => {
+    const m = L.marker([p.lat, p.lng], { icon: makeIcon('~'+(i+1), true) }).addTo(map).bindPopup(popupHtml(p, true));
+    markerMap['pending_'+p.id] = m;
+  });
+  renderList();
+}
+
 function renderList() {
-  const n = points.length;
-  document.getElementById('badge-count').textContent = n;
+  const total = cloudPoints.length + pendingQueue.length;
+  document.getElementById('badge-count').textContent = total;
   const list = document.getElementById('points-list');
-  if (!n) {
-    list.innerHTML = '<div class="empty-state">📍 Sin puntos aún<br><small>El cliente captura en campo y aparecen aquí al instante</small></div>';
+  if (!total) {
+    list.innerHTML = '<div class="empty-state">📍 Sin puntos aún<br><small>Captura tu posición y guarda el primer punto</small></div>';
     return;
   }
-  list.innerHTML = points.map((p, i) => `
-    <div class="point-card" data-key="${p._key}" onclick="focusPoint('${p._key}')">
-      <div class="point-icon">${i + 1}</div>
+  const cHTML = cloudPoints.map((p,i) => `
+    <div class="point-card" data-key="${p._key}" onclick="focusPoint('${p._key}',${p.lat},${p.lng})">
+      <div class="point-icon">${i+1}</div>
       <div class="point-info">
         <div class="point-name">${escHtml(p.name)}</div>
         <div class="point-coords">${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}</div>
-        <div class="point-time">${p.time} · ±${p.acc.toFixed(0)} m${p.alt ? ` · Alt ${p.alt.toFixed(1)} m` : ''}</div>
-        ${p.notes ? `<div class="point-note">${escHtml(p.notes)}</div>` : ''}
+        <div class="point-time">${p.time} · ±${p.acc.toFixed(0)} m${p.alt?' · Alt '+p.alt.toFixed(1)+' m':''}</div>
+        ${p.notes?'<div class="point-note">'+escHtml(p.notes)+'</div>':''}
       </div>
-      <button class="point-del" title="Eliminar" onclick="event.stopPropagation();deletePoint('${p._key}','${escHtml(p.name)}')">×</button>
+      <button class="point-del" onclick="event.stopPropagation();deletePoint('${p._key}','${escHtml(p.name)}')">×</button>
     </div>`).join('');
+
+  const pHTML = pendingQueue.map((p,i) => `
+    <div class="point-card pending" data-key="pending_${p.id}" onclick="focusPoint('pending_${p.id}',${p.lat},${p.lng})">
+      <div class="point-icon pend">⏳</div>
+      <div class="point-info">
+        <div class="point-name">${escHtml(p.name)}</div>
+        <div class="point-coords">${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}</div>
+        <div class="point-time">${p.time} · ±${p.acc.toFixed(0)} m</div>
+        ${p.notes?'<div class="point-note">'+escHtml(p.notes)+'</div>':''}
+        <div class="point-pending-tag">📵 Pendiente — se subirá al recuperar señal</div>
+      </div>
+      <button class="point-del" onclick="event.stopPropagation();deletePoint('pending_${p.id}','${escHtml(p.name)}')">×</button>
+    </div>`).join('');
+
+  list.innerHTML = cHTML + pHTML;
 }
 
-// ── Exportar ──────────────────────────────────────────────────
+function allPoints() { return [...cloudPoints, ...pendingQueue]; }
+
 function exportGeoJSON() {
-  if (!points.length) { showToast('No hay puntos para exportar', 'error'); return; }
-  const gj = {
-    type: 'FeatureCollection',
-    features: points.map(p => ({
-      type: 'Feature',
-      geometry: { type: 'Point', coordinates: [p.lng, p.lat, p.alt || 0] },
-      properties: { nombre: p.name, notas: p.notes || '', precision_m: p.acc, altitud_m: p.alt || null, fecha: p.time }
-    }))
-  };
-  download('puntos_campo.geojson', JSON.stringify(gj, null, 2), 'application/json');
-  showToast('GeoJSON exportado ✓', 'success');
+  const all = allPoints();
+  if (!all.length) { showToast('No hay puntos para exportar','error'); return; }
+  const gj = { type:'FeatureCollection', features: all.map(p => ({
+    type:'Feature', geometry:{ type:'Point', coordinates:[p.lng,p.lat,p.alt||0] },
+    properties:{ nombre:p.name, notas:p.notes||'', precision_m:p.acc, altitud_m:p.alt||null, fecha:p.time }
+  }))};
+  download('puntos_campo.geojson', JSON.stringify(gj,null,2), 'application/json');
+  showToast('GeoJSON exportado ✓','success');
 }
 
 function exportCSV() {
-  if (!points.length) { showToast('No hay puntos para exportar', 'error'); return; }
+  const all = allPoints();
+  if (!all.length) { showToast('No hay puntos para exportar','error'); return; }
   const rows = ['N,Nombre,Latitud,Longitud,Altitud_m,Precision_m,Notas,Fecha',
-    ...points.map((p, i) => `${i+1},"${p.name}",${p.lat.toFixed(7)},${p.lng.toFixed(7)},${p.alt ? p.alt.toFixed(2) : ''},${p.acc.toFixed(1)},"${p.notes || ''}","${p.time}"`)];
+    ...all.map((p,i) => `${i+1},"${p.name}",${p.lat.toFixed(7)},${p.lng.toFixed(7)},${p.alt?p.alt.toFixed(2):''},${p.acc.toFixed(1)},"${p.notes||''}","${p.time}"`)];
   download('puntos_campo.csv', rows.join('\n'), 'text/csv');
-  showToast('CSV exportado ✓', 'success');
+  showToast('CSV exportado ✓','success');
 }
 
 function download(fn, content, type) {
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob(['\uFEFF' + content], { type }));
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+content],{type}));
   a.download = fn; a.click();
 }
 
-// ── Utilidades ────────────────────────────────────────────────
 function escHtml(t) {
   if (!t) return '';
   return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 let toastTimer;
-function showToast(msg, type = '') {
+function showToast(msg, type='') {
   const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast show ' + type;
+  t.textContent = msg; t.className = 'toast show '+type;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.className = 'toast', 3000);
+  toastTimer = setTimeout(() => t.className='toast', 3500);
 }
+
+// Iniciar
+loadQueue();
+updateConnectionUI();
+if (isOnline && pendingQueue.length) setTimeout(syncQueue, 3000);
 </script>
 </body>
 </html>
